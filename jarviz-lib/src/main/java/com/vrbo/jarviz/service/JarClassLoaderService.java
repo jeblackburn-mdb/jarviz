@@ -37,6 +37,7 @@ import com.vrbo.jarviz.model.ShadowClass;
 
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("UnstableApiUsage")
 public class JarClassLoaderService implements ClassLoaderService {
 
     private final Logger log = LoggerFactory.getLogger(JarClassLoaderService.class);
