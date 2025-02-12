@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
+import com.vrbo.jarviz.service.ClassLoaderService;
+import com.vrbo.jarviz.service.JarClassLoaderService;
+import com.vrbo.jarviz.service.MavenArtifactDiscoveryService;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -153,7 +156,9 @@ public class AnalyzeCommand {
 
         try {
             final CouplingAnalyser analyser = new CouplingAnalyser();
-            analyser.start(jarvizConfig, applicationSet, filterConfig, reportFile);
+            MavenArtifactDiscoveryService artifactDiscoveryService = new MavenArtifactDiscoveryService(jarvizConfig);
+            final ClassLoaderService classLoaderService = new JarClassLoaderService(artifactDiscoveryService);
+            analyser.start(classLoaderService, jarvizConfig, applicationSet, filterConfig, reportFile);
         } catch (Exception e) {
             reportError(e);
             System.exit(ExitStatus.ANALYSER_FAILED);

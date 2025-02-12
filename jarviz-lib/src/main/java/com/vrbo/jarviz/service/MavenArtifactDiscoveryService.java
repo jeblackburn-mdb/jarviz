@@ -24,8 +24,6 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +43,6 @@ public class MavenArtifactDiscoveryService implements ArtifactDiscoveryService {
 
     private final long mavenTimeOutSeconds;
 
-    @Inject
     public MavenArtifactDiscoveryService(final JarvizConfig config) {
         this.localRepoPath = config.getArtifactDirectory();
         this.continueOnMavenError = config.getContinueOnMavenError();

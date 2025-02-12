@@ -19,7 +19,6 @@ package com.vrbo.jarviz.service;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.glassfish.hk2.api.ServiceLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,22 +50,13 @@ public class CouplingAnalyser {
      * @param filterConfig   The filters.
      * @param reportFile     File name for the report.
      */
-    public void start(final JarvizConfig jarvizConfig,
+    public void start(final ClassLoaderService classLoaderService,
+                      final JarvizConfig jarvizConfig,
                       final ApplicationSet applicationSet,
                       final CouplingFilterConfig filterConfig,
                       final String reportFile) {
-        final JarvizConfig config;
-        if (jarvizConfig != null) {
-            config = jarvizConfig;
-        } else {
-            log.info("JarvizConfig is not found, using default config.");
-            config = new JarvizConfig.Builder().build();
-        }
 
-        init(config);
-
-        final ServiceLocator serviceLocator = JarvizServiceLocator.createServiceLocator(config);
-        final ClassLoaderService classLoaderService = serviceLocator.getService(ClassLoaderService.class);
+        init(jarvizConfig);
 
         log.info("ApplicationSet found:\n{}", applicationSetToString(applicationSet));
 

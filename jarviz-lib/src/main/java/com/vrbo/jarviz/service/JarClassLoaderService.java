@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,6 @@ public class JarClassLoaderService implements ClassLoaderService {
 
     private final ArtifactDiscoveryService artifactDiscoveryService;
 
-    @Inject
     public JarClassLoaderService(final ArtifactDiscoveryService artifactDiscoveryService) {
         this.artifactDiscoveryService = artifactDiscoveryService;
     }
