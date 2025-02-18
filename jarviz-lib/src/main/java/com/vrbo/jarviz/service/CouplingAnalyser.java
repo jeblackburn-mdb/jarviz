@@ -19,17 +19,12 @@ package com.vrbo.jarviz.service;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.vrbo.jarviz.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vrbo.jarviz.config.CouplingFilterConfig;
 import com.vrbo.jarviz.config.JarvizConfig;
-import com.vrbo.jarviz.model.Application;
-import com.vrbo.jarviz.model.ApplicationSet;
-import com.vrbo.jarviz.model.Artifact;
-import com.vrbo.jarviz.model.CouplingRecord;
-import com.vrbo.jarviz.model.MethodCoupling;
-import com.vrbo.jarviz.model.ShadowClass;
 import com.vrbo.jarviz.visitor.FilteredClassVisitor;
 
 import static com.vrbo.jarviz.util.FileReadWriteUtils.getOrCreateDirectory;
@@ -91,7 +86,7 @@ public class CouplingAnalyser {
         }
 
         log.info("ApplicationSet={}, TotalClassesAnalyzed={}, TotalCouplingsFound={}",
-                 appSet.getAppSetName(), applicationSetClassCount.get(), appSetCouplingCount);
+            appSet.getAppSetName(), applicationSetClassCount.get(), appSetCouplingCount);
 
         writer.close();
         log.info("Couplings were saved!");
@@ -124,7 +119,7 @@ public class CouplingAnalyser {
         }
 
         log.info("Application={}, TotalClassesAnalyzed={}, TotalCouplingsFound={}",
-                 app.getAppName(), applicationClassCount.get(), appCouplingCount);
+            app.getAppName(), applicationClassCount.get(), appCouplingCount);
 
         return appCouplingCount;
     }
@@ -157,46 +152,71 @@ public class CouplingAnalyser {
         }
 
         final List<MethodCoupling> couplings = usageCollector.getMethodCouplings();
-        log.info("ClassCount={}, CouplingCount={}", classesFromJarClassLoader.size(), couplings.size());
+        final List<Annotation> annotations = usageCollector.getAnnotationCouplings();
+        log.info("ClassCount={}, CouplingCount={}, AnnotationCount={}", classesFromJarClassLoader.size(), couplings.size(), annotations.size());
 
         // Write the CouplingRecord as Json
         couplings.stream()
-                 .map(c -> toCouplingRecord(appSet, app, artifact, c))
-                 .forEach(writer::writeAsJson);
+            .map(c -> toCouplingRecord(appSet, app, artifact, c))
+            .forEach(writer::writeAsJson);
 
-        return couplings.size();
+        annotations.stream()
+            .map(a -> toCouplingRecord(appSet, app, artifact, a))
+            .forEach(writer::writeAsJson);
+
+        return couplings.size() + annotations.size();
+    }
+
+    private static CouplingRecord toCouplingRecord(final ApplicationSet appSet,
+                                                   final Application app,
+                                                   final Artifact artifact,
+                                                   final Annotation annotation) {
+        CouplingRecord.Builder builder = initializeRecord(appSet, app, artifact);
+        return builder
+            .sourceClass(annotation.getAnnotationTarget())
+            .targetClass(annotation.getAnnotationName())
+            .sourceMethod("")
+            .targetMethod("")
+            .build();
     }
 
     private static CouplingRecord toCouplingRecord(final ApplicationSet appSet,
                                                    final Application app,
                                                    final Artifact artifact,
                                                    final MethodCoupling methodCoupling) {
-        return new CouplingRecord.Builder()
-                   .appSetName(appSet.getAppSetName().orElse(""))
-                   .applicationName(app.getAppName())
-                   .artifactFileName(artifact.toFileName())
-                   .artifactId(artifact.getArtifactId())
-                   .artifactGroup(artifact.getGroupId())
-                   .artifactVersion(artifact.getVersion())
-                   .sourceClass(methodCoupling.getSource().getClassName())
-                   .sourceMethod(methodCoupling.getSource().getMethodName())
-                   .targetClass(methodCoupling.getTarget().getClassName())
-                   .targetMethod(methodCoupling.getTarget().getMethodName())
-                   .build();
+        CouplingRecord.Builder builder = initializeRecord(appSet, app, artifact);
+        return builder
+            .sourceClass(methodCoupling.getSource().getClassName())
+            .sourceMethod(methodCoupling.getSource().getMethodName())
+            .targetClass(methodCoupling.getTarget().getClassName())
+            .targetMethod(methodCoupling.getTarget().getMethodName())
+            .build();
+    }
+
+    private static CouplingRecord.Builder initializeRecord(ApplicationSet appSet, Application app, Artifact artifact) {
+        CouplingRecord.Builder builder = new CouplingRecord.Builder();
+        builder = builder
+            .appSetName(appSet.getAppSetName().orElse(""))
+            .applicationName(app.getAppName())
+            .artifactFileName(artifact.toFileName())
+            .artifactId(artifact.getArtifactId())
+            .artifactGroup(artifact.getGroupId())
+            .artifactVersion(artifact.getVersion());
+        return builder;
     }
 
     private static String applicationSetToString(final ApplicationSet appSet) {
         final StringBuilder buf = new StringBuilder();
         appSet.getApplications()
-              .forEach(app -> {
-                  buf.append(app.getAppName()).append(':').append('\n');
-                  app.getArtifacts().forEach(atf -> {
-                      buf.append("  ").append(atf.getArtifactId());
-                      buf.append(' ').append(atf.getBaseVersion().orElseGet(atf::getVersion));
-                      buf.append(' ').append(atf.getPackaging());
-                      buf.append('\n');
-                  });
-              });
+            .forEach(app -> {
+                buf.append(app.getAppName()).append(':').append('\n');
+                app.getArtifacts().forEach(atf -> {
+                    buf.append("  ").append(atf.getArtifactId());
+                    buf.append(' ').append(atf.getBaseVersion().orElseGet(atf::getVersion));
+                    buf.append(' ').append(atf.getPackaging());
+                    buf.append('\n');
+                });
+            });
 
         return buf.toString();
     }

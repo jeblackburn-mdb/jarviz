@@ -16,7 +16,9 @@
 
 package com.vrbo.jarviz.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,10 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.vrbo.jarviz.config.CouplingFilterConfig;
-import com.vrbo.jarviz.model.Collector;
-import com.vrbo.jarviz.model.CouplingFilterUtils;
-import com.vrbo.jarviz.model.Method;
-import com.vrbo.jarviz.model.MethodCoupling;
+import com.vrbo.jarviz.model.*;
 
 public class UsageCollector implements Collector {
 
@@ -36,6 +35,7 @@ public class UsageCollector implements Collector {
     private static CouplingFilterConfig DEFAULT_COUPLING_FILTER = new CouplingFilterConfig.Builder().build();
 
     private final Multimap<Method, Method> methodRefMap;
+    private final List<Annotation> annotations = new ArrayList<>();
 
     private final CouplingFilterConfig couplingFilterConfig;
 
@@ -60,6 +60,13 @@ public class UsageCollector implements Collector {
         }
     }
 
+    @Override
+    public void collectAnnotation(Annotation annotation) {
+        if (CouplingFilterUtils.filterAnnotation(couplingFilterConfig, annotation)) {
+            annotations.add(annotation);
+        }
+    }
+
     /**
      * Generates the efferent coupling graph for each method in the classes loaded by the class loader.
      *
@@ -79,5 +86,9 @@ public class UsageCollector implements Collector {
                    .source(entry.getKey())
                    .target(entry.getValue())
                    .build();
+    }
+
+    public List<Annotation> getAnnotationCouplings() {
+        return ImmutableList.copyOf(annotations);
     }
 }

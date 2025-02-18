@@ -22,11 +22,10 @@ import java.io.Writer;
 
 import javax.annotation.Nonnull;
 
-import com.vrbo.jarviz.model.CouplingRecord;
 import com.vrbo.jarviz.util.JsonUtils;
 
 /**
- * Simple JSON blob writer for the {@link CouplingRecord}.
+ * Simple JSON blob writer for the objects like CouplingRecords and Annotations.
  * The resultant output will a newline-delimited JSON file (.jsonl).
  * This is not thread safe, should not be shared among multiple threads.
  * See http://jsonlines.org
@@ -46,7 +45,7 @@ public class CouplingRecordWriter {
      *
      * @param couplingRecord The coupling record.
      */
-    public void writeAsJson(final CouplingRecord couplingRecord) {
+    public void writeAsJson(final Object couplingRecord) {
         if (writer == null) {
             openFileStream();
         }

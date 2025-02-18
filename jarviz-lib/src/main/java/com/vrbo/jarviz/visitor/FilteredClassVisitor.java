@@ -1,34 +1,30 @@
 /*
-* Copyright 2020 Expedia, Inc.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2020 Expedia, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.vrbo.jarviz.visitor;
 
 import java.io.IOException;
 import java.util.Objects;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
-import com.vrbo.jarviz.model.Collector;
-import com.vrbo.jarviz.model.Method;
+import com.vrbo.jarviz.model.*;
+import org.objectweb.asm.*;
 
 import static com.vrbo.jarviz.util.NamingUtils.toSourceCodeFormat;
 import static com.vrbo.jarviz.visitor.FilteredMethodVisitor.cleanseClassName;
+import static org.objectweb.asm.Opcodes.ASM7;
 
 public class FilteredClassVisitor extends ClassVisitor {
 
@@ -47,7 +43,7 @@ public class FilteredClassVisitor extends ClassVisitor {
     }
 
     private FilteredClassVisitor(final String className, final Collector collect, final ClassReader classReader) {
-        super(Opcodes.ASM7);
+        super(ASM7);
 
         Objects.requireNonNull(className);
         Objects.requireNonNull(collect);
@@ -73,9 +69,29 @@ public class FilteredClassVisitor extends ClassVisitor {
                                      final String[] exceptions) {
         final MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
         final Method method = new Method.Builder()
-                                  .className(className)
-                                  .methodName(name)
-                                  .build();
+            .className(className)
+            .methodName(name)
+            .build();
         return new FilteredMethodVisitor(method, methodVisitor, collect);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+        // descriptor looks like "Lcom.foo.bar.Annotation"
+        Annotation annotation = new Annotation.Builder()
+            .annotationTarget(this.className)
+            .annotationName(cleanUpAnnotationName(descriptor))
+            .build();
+        collect.collectAnnotation(annotation);
+
+        return super.visitAnnotation(descriptor, visible);
+    }
+
+    private static String cleanUpAnnotationName(String descriptor) {
+        return
+            cleanseClassName(
+                toSourceCodeFormat(
+                    descriptor.substring(1)
+                        .replace(";", "")));
     }
 }
