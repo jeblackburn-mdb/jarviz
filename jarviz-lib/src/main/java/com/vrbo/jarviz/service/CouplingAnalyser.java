@@ -48,19 +48,18 @@ public class CouplingAnalyser {
      * @param jarvizConfig   The configurations.
      * @param applicationSet The application set.
      * @param filterConfig   The filters.
-     * @param reportFile     File name for the report.
+     * @param writer
      */
     public void start(final ClassLoaderService classLoaderService,
                       final JarvizConfig jarvizConfig,
                       final ApplicationSet applicationSet,
                       final CouplingFilterConfig filterConfig,
-                      final String reportFile) {
+                      final CouplingRecordWriter writer) {
 
         init(jarvizConfig);
 
         log.info("ApplicationSet found:\n{}", applicationSetToString(applicationSet));
-
-        analyzeApplicationSet(applicationSet, filterConfig, classLoaderService, reportFile);
+        analyzeApplicationSet(applicationSet, filterConfig, classLoaderService, writer);
     }
 
     private void init(final JarvizConfig jarvizConfig) {
@@ -78,17 +77,15 @@ public class CouplingAnalyser {
      * @param appSet             The application set.
      * @param filterConfig       The filters.
      * @param classLoaderService Class loader service.
-     * @param reportFile         File name for the report.
+     * @param writer
      * @return Coupling count for the application set.
      */
     private int analyzeApplicationSet(final ApplicationSet appSet,
                                       final CouplingFilterConfig filterConfig,
-                                      final ClassLoaderService classLoaderService,
-                                      final String reportFile) {
+                                      final ClassLoaderService classLoaderService, CouplingRecordWriter writer) {
         log.info("Analyzing applicationSet");
         int appSetCouplingCount = 0;
 
-        final CouplingRecordWriter writer = new CouplingRecordWriter(reportFile);
         for (Application application : appSet.getApplications()) {
             appSetCouplingCount += analyzeApplication(appSet, application, filterConfig, classLoaderService, writer);
         }
@@ -97,7 +94,7 @@ public class CouplingAnalyser {
                  appSet.getAppSetName(), applicationSetClassCount.get(), appSetCouplingCount);
 
         writer.close();
-        log.info("Couplings were saved to {}", reportFile);
+        log.info("Couplings were saved!");
 
         return appSetCouplingCount;
     }

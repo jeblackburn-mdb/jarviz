@@ -27,9 +27,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.vrbo.jarviz.service.ClassLoaderService;
-import com.vrbo.jarviz.service.JarClassLoaderService;
-import com.vrbo.jarviz.service.MavenArtifactDiscoveryService;
+import com.vrbo.jarviz.service.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -40,7 +38,6 @@ import com.google.common.base.Strings;
 import com.vrbo.jarviz.config.CouplingFilterConfig;
 import com.vrbo.jarviz.config.JarvizConfig;
 import com.vrbo.jarviz.model.ApplicationSet;
-import com.vrbo.jarviz.service.CouplingAnalyser;
 
 import static com.vrbo.jarviz.util.FileReadWriteUtils.readFileAsString;
 import static com.vrbo.jarviz.util.JsonUtils.fromJsonString;
@@ -158,7 +155,9 @@ public class AnalyzeCommand {
             final CouplingAnalyser analyser = new CouplingAnalyser();
             MavenArtifactDiscoveryService artifactDiscoveryService = new MavenArtifactDiscoveryService(jarvizConfig);
             final ClassLoaderService classLoaderService = new JarClassLoaderService(artifactDiscoveryService);
-            analyser.start(classLoaderService, jarvizConfig, applicationSet, filterConfig, reportFile);
+            final CouplingRecordWriter writer = new CouplingRecordWriter(reportFile);
+
+            analyser.start(classLoaderService, jarvizConfig, applicationSet, filterConfig, writer);
         } catch (Exception e) {
             reportError(e);
             System.exit(ExitStatus.ANALYSER_FAILED);
